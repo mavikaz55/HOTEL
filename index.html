@@ -296,6 +296,13 @@
             <p>總投票數</p>
             <p class="total-votes-number" id="totalVotes">0</p>
         </div>
+
+        <!-- 管理功能 - 雙擊標題開啟 -->
+        <div id="adminPanel" style="display: none; margin-top: 20px; padding: 20px; background: #fff3cd; border-radius: 15px; border: 2px solid #ffc107;">
+            <h3 style="color: #856404; margin-bottom: 15px;">🔧 管理功能</h3>
+            <button onclick="clearAllVotes()" style="background: #dc3545; color: white; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer; margin-right: 10px;">清除所有投票</button>
+            <button onclick="clearMyVote()" style="background: #ffc107; color: #333; padding: 10px 20px; border: none; border-radius: 8px; cursor: pointer;">清除我的投票狀態</button>
+        </div>
     </div>
 
     <!-- 確認視窗 -->
@@ -313,8 +320,9 @@
 
     <script>
         // 從 localStorage 獲取投票數據，如果沒有則初始化
-        let votes = JSON.parse(localStorage.getItem('travelVotes')) || [0, 0, 0];
-        let hasVoted = localStorage.getItem('hasVoted') === 'true';
+        // 使用唯一的key名稱避免與其他頁面衝突
+        let votes = JSON.parse(localStorage.getItem('hotelTravelVotes')) || [0, 0, 0];
+        let hasVoted = localStorage.getItem('hotelHasVoted') === 'true';
         let pendingVoteOption = null;
         
         const optionNames = ['哈利波特影城 🏰', '迪士尼樂園 🎠', '兩者都去，不去三溪園 ✨'];
@@ -342,8 +350,8 @@
             if (pendingVoteOption === null) return;
             
             votes[pendingVoteOption]++;
-            localStorage.setItem('travelVotes', JSON.stringify(votes));
-            localStorage.setItem('hasVoted', 'true');
+            localStorage.setItem('hotelTravelVotes', JSON.stringify(votes));
+            localStorage.setItem('hotelHasVoted', 'true');
             hasVoted = true;
             
             // 關閉確認視窗
@@ -406,6 +414,55 @@
             if (event.target == modal) {
                 modal.style.display = 'none';
                 pendingVoteOption = null;
+            }
+        }
+
+        // 雙擊標題開啟管理面板
+        let clickCount = 0;
+        document.querySelector('h1').addEventListener('click', function() {
+            clickCount++;
+            if (clickCount === 2) {
+                const adminPanel = document.getElementById('adminPanel');
+                adminPanel.style.display = adminPanel.style.display === 'none' ? 'block' : 'none';
+                clickCount = 0;
+            }
+            setTimeout(() => clickCount = 0, 500);
+        });
+
+        // 清除所有投票（包括投票數和投票狀態）
+        function clearAllVotes() {
+            if (confirm('確定要清除所有投票記錄嗎？此操作無法復原！')) {
+                localStorage.removeItem('hotelTravelVotes');
+                localStorage.removeItem('hotelHasVoted');
+                votes = [0, 0, 0];
+                hasVoted = false;
+                
+                // 重新啟用按鈕
+                const buttons = document.querySelectorAll('.vote-button');
+                buttons.forEach(button => {
+                    button.disabled = false;
+                    button.textContent = '投這個一票';
+                });
+                
+                updateDisplay();
+                alert('✅ 所有投票記錄已清除！');
+            }
+        }
+
+        // 只清除當前用戶的投票狀態（不清除投票數）
+        function clearMyVote() {
+            if (confirm('確定要清除您的投票狀態嗎？這會讓您可以再次投票。')) {
+                localStorage.removeItem('hotelHasVoted');
+                hasVoted = false;
+                
+                // 重新啟用按鈕
+                const buttons = document.querySelectorAll('.vote-button');
+                buttons.forEach(button => {
+                    button.disabled = false;
+                    button.textContent = '投這個一票';
+                });
+                
+                alert('✅ 您的投票狀態已清除，現在可以重新投票了！');
             }
         }
     </script>
